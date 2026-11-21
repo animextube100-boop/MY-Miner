@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f4fbff">
+<title>MY Miner</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--blue:#08a9dc;--blue2:#087db7;--ink:#172b3b;--muted:#718797;--line:#dceef6;--bg:#f3faff;--card:#fff;--green:#18b78a;--shadow:0 5px 18px rgba(30,113,153,.09)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+button,input{font:inherit}button{cursor:pointer}.app{max-width:520px;min-height:100dvh;margin:auto;background:linear-gradient(180deg,#f1fbff 0%,#f7fcff 55%,#f1faff 100%);padding-bottom:88px;position:relative}
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 17px;background:#fff;border-bottom:1px solid #e7f2f7;position:sticky;top:0;z-index:5}
+.brand{font-weight:900;letter-spacing:.2px;font-size:19px}.bolt{color:var(--blue);font-size:20px}.top-right{display:flex;align-items:center;gap:9px}.pill{border:1px solid var(--line);border-radius:20px;padding:6px 10px;background:#f8fdff;color:#537184;font-size:11px;font-weight:700}
+.profile{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#b9edff,#1daee0);display:grid;place-items:center;color:#fff;font-weight:900}
+main{padding:13px 13px 18px}.page{display:none}.page.active{display:block}
+.user-strip{display:flex;align-items:center;justify-content:space-between;margin:1px 2px 12px;font-size:11px;color:#658094}.user-name{font-weight:800;color:#243c4d;font-size:12px}.verified{color:var(--green);font-weight:800}
+.card{background:var(--card);border:1px solid #e1f0f6;border-radius:17px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#fff 0%,#eafaff 100%);padding:17px 16px;min-height:154px}
+.hero:after{content:"✦";position:absolute;right:18px;top:23px;font-size:76px;color:#d5f3fc;transform:rotate(18deg)}
+.eyebrow{font-size:10px;letter-spacing:.7px;color:var(--blue2);font-weight:900;text-transform:uppercase}
+h1{font-size:22px;line-height:1.15;margin:9px 0 6px;max-width:75%}.sub{font-size:11px;line-height:1.5;color:var(--muted);max-width:78%}
+.actions{display:flex;gap:7px;margin-top:13px;position:relative;z-index:1}.btn{border:0;border-radius:11px;padding:9px 13px;font-size:11px;font-weight:800;background:var(--blue);color:white;box-shadow:0 4px 10px rgba(8,169,220,.18)}.btn.secondary{background:#e7f8ff;color:#087eae;box-shadow:none;border:1px solid #cceefa}.btn.ghost{background:#fff;color:#426174;border:1px solid var(--line);box-shadow:none}.btn:disabled{opacity:.5;cursor:not-allowed}
+.balance-card{display:flex;justify-content:space-between;align-items:center;gap:8px}.balance-title{font-size:10px;color:#7c929f;font-weight:800}.balance{font-size:25px;font-weight:900;letter-spacing:-.7px;margin:5px 0 2px}.unit{font-size:11px;color:var(--blue2);font-weight:900}.min-withdraw{text-align:right;font-size:10px;color:#8095a2;line-height:1.5}.min-withdraw strong{display:block;color:#2e6078;font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}.stat{background:#fff;border:1px solid #e1f0f6;border-radius:14px;padding:12px;box-shadow:var(--shadow);min-height:75px}.stat-label{font-size:10px;color:#78909e;font-weight:700}.stat-value{font-size:17px;font-weight:900;margin-top:7px}.stat small{font-size:10px;color:var(--muted);font-weight:600}
+.mining{padding:15px;background:linear-gradient(135deg,#fff,#effaff)}.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.section-head h2{font-size:14px;margin:0}.status{font-size:10px;color:var(--green);font-weight:900}.mining-row{display:flex;align-items:center;gap:12px}.pickaxe{width:56px;height:56px;border-radius:17px;background:linear-gradient(145deg,#fff2d9,#ffdda0);display:grid;place-items:center;font-size:29px}.mining-info{flex:1}.mining-info strong{font-size:18px;display:block}.mining-info span{font-size:10px;color:var(--muted)}.timer{font-size:17px;font-weight:900;color:#087eae;letter-spacing:1px;margin-top:8px}
+.progress{height:7px;border-radius:9px;background:#e5f2f7;overflow:hidden;margin:10px 0}.progress>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#05b8e9,#4bd7e9);border-radius:9px;transition:width .3s}
+.mining-footer{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#77909e}.wide{width:100%;margin-top:11px;padding:12px}
+.section-title{font-size:14px;font-weight:900;margin:17px 2px 9px}.mini-row{display:flex;justify-content:space-between;align-items:center;font-size:11px}.mini-row strong{font-size:12px}
+.streak{background:linear-gradient(120deg,#fff,#effaff)}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px}.day{background:#f2f9fc;border:1px solid #e0eff5;border-radius:9px;text-align:center;padding:8px 1px;font-size:9px;color:#7b929f}.day b{display:block;color:#277a9e;font-size:11px;margin-top:4px}.day.done{background:#e2fbf3;border-color:#bceedd;color:#159b75}
+.bottom-nav{position:fixed;z-index:10;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:72px;padding:7px 5px calc(7px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);border-top:1px solid #dceef5;display:grid;grid-template-columns:repeat(5,1fr);backdrop-filter:blur(12px)}
+.nav-btn{border:0;background:transparent;color:#91a4b0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9px;font-weight:800}.nav-btn .ico{font-size:19px;line-height:1}.nav-btn.active{color:#079dcc}.nav-btn.active:before{content:"";width:25px;height:3px;border-radius:4px;background:var(--blue);position:absolute;top:0}
+.page-head{padding:7px 2px 12px}.page-head h2{font-size:20px;margin:0 0 5px}.page-head p{font-size:11px;color:var(--muted);margin:0}
+.task{display:flex;gap:10px;align-items:center}.task-icon{width:38px;height:38px;border-radius:12px;background:#e9f8ff;display:grid;place-items:center;font-size:18px;flex:none}.task-body{flex:1;min-width:0}.task-body b{font-size:12px;display:block}.task-body span{font-size:10px;color:var(--muted);display:block;margin-top:4px}.reward{font-size:10px;color:#159b75;font-weight:900;margin-top:6px}
+.task-actions{margin-top:10px;display:flex;justify-content:space-between;align-items:center}.tag{font-size:9px;border-radius:20px;padding:5px 8px;background:#eaf8ff;color:#0789b9;font-weight:900}
+.refbox{background:#f6fcff;border:1px dashed #b9e5f4;padding:11px;border-radius:11px;font-size:10px;color:#567789;word-break:break-all;margin:10px 0}.input{width:100%;border:1px solid #d9eaf1;border-radius:10px;padding:11px;background:#fbfeff;outline:none;font-size:12px;color:var(--ink);margin-top:7px}.input:focus{border-color:#55c8e8}
+.wallet-total{background:linear-gradient(130deg,#e9faff,#fff);}.wallet-total .balance{font-size:28px}
+.activity{display:flex;align-items:center;gap:9px;padding:10px 0;border-bottom:1px solid #edf4f7}.activity:last-child{border:0}.activity-dot{width:30px;height:30px;border-radius:10px;background:#e8faf4;color:#18a77e;display:grid;place-items:center}.activity-main{flex:1}.activity-main b{font-size:11px;display:block}.activity-main span{font-size:9px;color:var(--muted)}.activity-amount{font-size:11px;font-weight:900;color:#159b75}
+.notice{font-size:10px;color:#718b9b;line-height:1.5;background:#f6fbfd;padding:10px;border-radius:10px;margin-top:10px}
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,35,48,.42);z-index:20;display:none;align-items:flex-end;justify-content:center}.modal-backdrop.show{display:flex}.modal{width:min(520px,100%);background:white;border-radius:20px 20px 0 0;padding:19px 17px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px #193b4b22}.modal h3{margin:0 0 7px;font-size:16px}.modal p{font-size:11px;color:var(--muted);line-height:1.5}.close{float:right;border:0;background:#eff7fa;border-radius:50%;width:28px;height:28px}
+.toast{position:fixed;bottom:85px;left:50%;transform:translate(-50%,12px);background:#17394c;color:#fff;padding:10px 15px;border-radius:22px;font-size:11px;opacity:0;pointer-events:none;transition:.2s;z-index:30;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}
+.empty{text-align:center;padding:25px 12px;color:#7d95a3;font-size:11px}.contact{font-size:10px;word-break:break-all;color:#47768c}.hidden{display:none!important}
+
+.miner-card{display:flex;gap:11px;align-items:center}.miner-emblem{width:48px;height:48px;border-radius:14px;background:linear-gradient(145deg,#e6f8ff,#c9efff);display:grid;place-items:center;font-size:23px;flex:none}.miner-details{flex:1;min-width:0}.miner-details b{font-size:12px;display:block}.miner-details span{font-size:10px;color:var(--muted);display:block;margin-top:4px}.miner-speed{font-size:12px;color:#078ab9;font-weight:900;margin-top:5px}.miner-price{font-size:11px;font-weight:900;text-align:right;white-space:nowrap}.promote-hero{background:linear-gradient(130deg,#effaff,#fff)}.budget-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:9px 0}.budget-option{border:1px solid #dcecf4;background:#fff;border-radius:10px;padding:9px 3px;text-align:center;font-size:10px;color:#36586a}.budget-option b{display:block;font-size:11px}.budget-option.selected{background:#102c3c;color:#fff;border-color:#102c3c}.modal-label{display:block;font-size:10px;font-weight:800;color:#537184;margin:12px 0 5px;text-transform:uppercase}.modal-input{width:100%;border:1px solid #d7eaf2;border-radius:11px;padding:11px;font-size:12px;outline:none}.modal-input:focus{border-color:#38bde5}.modal-sheet{max-height:90dvh;overflow:auto}.task-promo{border:1px solid #dceef6}
+\n#ton-connect{display:flex;align-items:center;min-width:0}#ton-connect button{font-size:10px!important;min-height:32px!important;padding:6px 9px!important;border-radius:18px!important;white-space:nowrap!important}#ton-connect [data-tc-wallets-modal],#ton-connect *{max-width:100%}
+@media(min-width:600px){body{padding:20px 0}.app{border-radius:22px;overflow:hidden;min-height:calc(100dvh - 40px);box-shadow:0 15px 60px #1c78921a}.topbar{position:relative}.bottom-nav{bottom:20px;border-radius:0 0 22px 22px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><img alt="MY token" src="data:image/png;base64,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 " style="width:27px;height:27px;border-radius:50%;vertical-align:middle;margin-right:5px"> MY Miner</div>
+    <div class="top-right"><span class="pill" id="connection">● Demo mode</span><div id="ton-connect"></div><div class="profile" id="avatar">M</div></div>
+  </header>
+  <main>
+    <section class="page active" id="home">
+      <div class="user-strip"><span>MY Miner · <span class="user-name" id="welcomeName">Welcome, Miner</span></span><span class="verified">● Account ready</span></div>
+      <div class="card hero">
+        <div class="eyebrow">✦ Welcome to MY Miner</div>
+        <h1>Mine MY points<br>every day!</h1>
+        <div class="sub">Start mining, complete missions and invite friends to grow your MY balance.</div>
+        <div class="actions"><button class="btn" onclick="showPage('station')">Mine now</button><button class="btn secondary" onclick="showPage('tasks')">Explore tasks</button></div>
+      </div>
+      <div class="card balance-card">
+        <div><div class="balance-title">APP BALANCE</div><div class="balance" id="balance">0.0000 <span class="unit">MY</span></div></div>
+        <div class="min-withdraw">Minimum withdrawal<strong>2,000 MY</strong><a href="#" onclick="showPage('wallet');return false" style="color:#079dcc;text-decoration:none;font-weight:800">Wallet ›</a></div>
+      </div>
+      <div class="grid2">
+        <div class="stat"><div class="stat-label">⚡ Hourly mining</div><div class="stat-value">5 <small>MY/hr</small></div></div>
+        <div class="stat"><div class="stat-label">☀ Daily mining</div><div class="stat-value">480 <small>MY/day</small></div></div>
+        <div class="stat"><div class="stat-label">🚀 Boost</div><div class="stat-value">x1.00</div><small>Mining multiplier</small></div>
+        <div class="stat"><div class="stat-label">🏅 League</div><div class="stat-value">Bronze</div><small>Level 1 · Beginner</small></div>
+      </div>
+      <div class="card mining" style="margin-top:12px">
+        <div class="section-head"><h2>⛏ Mining · Level 1</h2><span class="status" id="mineStatus">● Ready</span></div>
+        <div class="mining-row"><div class="pickaxe">⛏️</div><div class="mining-info"><strong id="minedPreview">+0.0000 MY</strong><span>Mining rate: 5 MY per hour</span><div class="timer" id="timer">00:00:00</div></div></div>
+        <div class="progress"><i id="mineProgress"></i></div>
+        <div class="mining-footer"><span id="mineHint">Tap start to begin your mining session</span><span>24 hours</span></div>
+        <button class="btn wide" id="mineButton" onclick="toggleMining()">Start mining</button>
+      </div>
+      <div class="card streak">
+        <div class="section-head"><h2>🎁 Daily streak</h2><span class="tag" id="streakTag">Day 1 / 7</span></div>
+        <div class="mini-row"><strong>Come back every day!</strong><span class="verified">+15 MY today</span></div>
+        <div class="days"><div class="day done">Day<b>1 ✓</b></div><div class="day">Day<b>2 · 20</b></div><div class="day">Day<b>3 · 30</b></div><div class="day">Day<b>4 · 40</b></div><div class="day">Day<b>5 · 50</b></div><div class="day">Day<b>6 · 60</b></div><div class="day">Day<b>7 · 80</b></div></div>
+        <button class="btn secondary wide" onclick="claimDaily()">Claim daily reward · +15 MY</button>
+      </div>
+      <div class="section-title">Quick access</div>
+      <div class="grid2">
+        <div class="stat" onclick="showPage('friends')" style="cursor:pointer"><div class="stat-label">👥 Your referrals</div><div class="stat-value" id="refCount">0</div><small>Invite friends ›</small></div>
+        <div class="stat" onclick="showPage('tasks')" style="cursor:pointer"><div class="stat-label">🎯 Missions</div><div class="stat-value">3</div><small>Earn extra MY ›</small></div>
+      </div>
+    </section>
+
+    <section class="page" id="station">
+      <div class="page-head"><h2>⛏ Mining Station</h2><p>Manage your mining session and increase your MY points.</p></div>
+      <div class="card mining">
+        <div class="section-head"><h2>MY Miner · Level 1</h2><span class="status" id="stationStatus">● Ready</span></div>
+        <div class="mining-row"><div class="pickaxe">⛏️</div><div class="mining-info"><strong>5 MY / hour</strong><span>Current mining power</span><div class="timer" id="stationTimer">00:00:00</div></div></div>
+        <div class="progress"><i id="stationProgress"></i></div>
+        <button class="btn wide" id="stationMineButton" onclick="toggleMining()">Start mining</button>
+        <div class="notice">Mining runs for up to 24 hours in this demo. Your accrued amount is calculated from elapsed time. In production, the server will calculate and validate rewards.</div>
+      </div>
+      <div class="section-title">Miner details</div>
+      <div class="grid2"><div class="stat"><div class="stat-label">Mining speed</div><div class="stat-value">20 MY</div><small>Per hour</small></div><div class="stat"><div class="stat-label">Session length</div><div class="stat-value">24 hrs</div><small>Maximum</small></div><div class="stat"><div class="stat-label">Multiplier</div><div class="stat-value">x1.00</div><small>Current boost</small></div><div class="stat"><div class="stat-label">Miner level</div><div class="stat-value">Level 1</div><small>Starter miner</small></div></div>
+    </section>
+
+    <section class="page" id="tasks">
+      <div class="page-head"><h2>🎯 Mission Center</h2><p>Open missions, visit links and earn MY points.</p></div>
+      <div class="card promote-hero"><div class="section-head"><h2>Promote your link or channel</h2><span class="tag">1 TON / 1K CLICKS</span></div><p class="sub">Create a sponsored mission. It will appear in the tasks list after payment is confirmed.</p><button class="btn wide" onclick="openPromote()">＋ Promote link or channel</button></div>
+      <div class="section-title">Available missions</div>
+      <div id="promotedTasks"></div>
+      <div class="card"><div class="task"><div class="task-icon">📢</div><div class="task-body"><b>Join our Telegram channel</b><span>Open the official community link</span><div class="reward">+150 MY</div></div></div><div class="task-actions"><span class="tag">COMMUNITY</span><button class="btn secondary" onclick="completeDemoTask('official',150,'https://t.me/')">Start task</button></div></div>
+      <div class="card"><div class="task"><div class="task-icon">🌐</div><div class="task-body"><b>Explore our website</b><span>Visit the project website</span><div class="reward">+25 MY</div></div></div><div class="task-actions"><span class="tag">WEBSITE</span><button class="btn secondary" onclick="completeDemoTask('website',25,'https://example.com')">Start task</button></div></div>
+      <div class="notice">Tasks are currently demo-only. In production, each task reward and each promoted click must be recorded by the backend, with one reward per eligible user and within the advertiser's paid click budget. A redirect alone cannot prove a genuine human visit.</div>
+    </section>
+
+    <section class="page" id="market">
+      <div class="page-head"><h2>⛏ Miner Market</h2><p>Choose a miner. Higher tiers earn MY points faster.</p></div>
+      <div class="card promote-hero"><div class="eyebrow">MINING POWER</div><h2 style="font-size:17px;margin:7px 0">Unlock your next miner</h2><p class="sub">Basic miner requires a one-time 0.5 TON wallet verification. Premium miners are purchased in TON.</p></div>
+      <div id="minerList"></div>
+      <div class="notice">Miner payments are not processed in this frontend demo. TON Connect, on-chain payment verification and secure server-side miner activation will be added with the backend. Never treat a wallet connection alone as proof of payment.</div>
+    </section>
+
+    <section class="page" id="friends">
+      <div class="page-head"><h2>👥 Invite friends</h2><p>Grow the MY Miner community together.</p></div>
+      <div class="card wallet-total"><div class="eyebrow">YOUR REFERRAL REWARD</div><div class="balance">+50 <span class="unit">MY</span></div><div class="sub">Earn 50 MY for each eligible friend who joins through your invite link. Referral rules will be enforced by the backend.</div></div>
+      <div class="card"><div class="section-head"><h2>Your invite link</h2><span class="tag">PERSONAL</span></div><div class="refbox" id="refLink">Your Telegram invite link will appear after the bot is connected.</div><div class="grid2"><button class="btn" onclick="copyReferral()">Copy link</button><button class="btn secondary" onclick="shareReferral()">Invite friends</button></div></div>
+      <div class="grid2"><div class="stat"><div class="stat-label">Total referrals</div><div class="stat-value" id="friendCount">0</div></div><div class="stat"><div class="stat-label">Referral earnings</div><div class="stat-value">0 MY</div></div></div>
+      <div class="notice">Your final referral link will use your Telegram bot username and a unique referral code.</div>
+    </section>
+
+    <section class="page" id="wallet">
+      <div class="page-head"><h2>👛 MY Wallet</h2><p>Your points balance and withdrawal requests.</p></div>
+      <div class="card"><div class="section-head"><h2>TON wallet connection</h2><span class="tag" id="tonWalletBadge">NOT CONNECTED</span></div><div id="tonWalletStatus" style="font-size:12px;font-weight:800;color:#718797">Connect your TON wallet using the button in the top bar.</div><div class="notice">Connecting a wallet does not make a payment or unlock a miner. MY Miner will only request a transaction when you choose a paid action, and payments will require separate server-side verification.</div></div>
+      <div class="card wallet-total"><div class="balance-title">AVAILABLE BALANCE</div><div class="balance" id="walletBalance">0.0000 <span class="unit">MY</span></div><div class="mini-row"><span>Minimum withdrawal</span><strong>2,000 MY</strong></div><div class="notice">You must own at least one premium miner to request a withdrawal.</div></div>
+      <div class="card"><div class="section-head"><h2>Withdrawal request</h2><span class="tag">MANUAL</span></div><label class="balance-title" for="withdrawAmount">Amount (MY)</label><input class="input" id="withdrawAmount" type="number" min="2000" step="1" placeholder="Minimum 2,000 MY"><label class="balance-title" for="walletAddress" style="display:block;margin-top:12px">Your TON wallet address</label><input class="input" id="walletAddress" type="text" placeholder="Enter your TON wallet address"><button class="btn wide" onclick="requestWithdrawal()">Submit withdrawal request</button><div class="notice">Withdrawal eligibility: at least 2,000 MY balance and at least one purchased premium miner (Bronze or higher). Basic Miner does not qualify. Withdrawals are not automatic. Requests will be reviewed and processed manually by the MY Miner admin after the backend is connected. This demo does not send cryptocurrency.</div></div>
+      <div class="card"><div class="section-head"><h2>Contact address</h2><span class="verified">● Display only</span></div><div class="contact" id="contactAddress">EQCFVNlRb-NHHDQfv3Q9xvDXBLJlay855_xREsq5ZDX6KN-w</div><button class="btn secondary" style="margin-top:10px" onclick="copyContact()">Copy contact address</button><div class="notice">This address is displayed for contact/reference only. It is not configured as a deposit or withdrawal destination.</div></div>
+      <div class="card"><div class="section-head"><h2>Recent activity</h2><span class="tag">LOCAL DEMO</span></div><div id="activityList"><div class="empty">No activity yet.</div></div></div>
+    </section>
+  </main>
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="home" onclick="showPage('home')"><span class="ico">⌂</span>Home</button>
+    <button class="nav-btn" data-page="station" onclick="showPage('station')"><span class="ico">⛏</span>Station</button>
+    <button class="nav-btn" data-page="market" onclick="showPage('market')"><span class="ico">▣</span>Market</button>
+    <button class="nav-btn" data-page="friends" onclick="showPage('friends')"><span class="ico">♧</span>Friends</button>
+    <button class="nav-btn" data-page="wallet" onclick="showPage('wallet')"><span class="ico">▱</span>Wallet</button>
+  </nav>
+</div>
+<div class="modal-backdrop" id="modalBackdrop" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="close" onclick="closeModal()">×</button><h3 id="modalTitle">Notice</h3><p id="modalText"></p><button class="btn wide" onclick="closeModal()">Okay</button></div></div>
+<div class="toast" id="toast"></div>
+<script src="https://unpkg.com/@tonconnect/ui@3.0.0/dist/tonconnect-ui.min.js"></script>
+<script>
+(() => {
+  const SESSION_MS = 24*60*60*1000, MIN_WITHDRAW = 2000;
+  function currentRate(){const m=miners.find(x=>x.id===state.activeMiner);return m?m.speed:5;}
+  const KEY = 'myMinerDemoV1';
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor('#ffffff'); tg.setBackgroundColor('#f3faff'); } catch(e) {} }
+  let state = load();
+  let timerInterval = null;
+  function load(){try{return Object.assign({balance:0,sessionStart:0,sessionClaimed:false,dailyClaimed:'',tasks:{},withdrawals:[],activity:[],referrals:0,unlockedMiners:[],activeMiner:'basic',promotions:[],claimedPromotions:[],claimedTasks:[]},JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return {balance:0,sessionStart:0,sessionClaimed:false,dailyClaimed:'',tasks:{},withdrawals:[],activity:[],referrals:0}}}
+  function save(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+  function fmt(n){return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4})}
+  function accrued(){if(!state.sessionStart)return 0;return Math.min(SESSION_MS,Math.max(0,Date.now()-state.sessionStart))*((state.sessionRate)||currentRate())/3600000}
+  function active(){return !!state.sessionStart && Date.now()-state.sessionStart<SESSION_MS}
+  function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'});if(id==='friends')updateReferral()}
+  function render(){
+    const bal=fmt(state.balance);
+    ['balance','walletBalance'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=bal+' <span class="unit">MY</span>'});
+    const mine=accrued(), isOn=active(), remaining=isOn?Math.max(0,SESSION_MS-(Date.now()-state.sessionStart)):0;
+    const timerText=isOn?timeFmt(remaining):'00:00:00';
+    ['timer','stationTimer'].forEach(id=>document.getElementById(id).textContent=timerText);
+    ['minedPreview'].forEach(id=>document.getElementById(id).textContent='+'+fmt(mine)+' MY');
+    const pct=isOn?Math.min(100,(Date.now()-state.sessionStart)/SESSION_MS*100):0;
+    ['mineProgress','stationProgress'].forEach(id=>document.getElementById(id).style.width=pct+'%');
+    document.getElementById('mineStatus').textContent=isOn?'● Mining':'● Ready';
+    document.getElementById('stationStatus').textContent=isOn?'● Mining':'● Ready';
+    document.getElementById('mineHint').textContent=isOn?'Mining rewards are accumulating':'Tap start to begin your mining session';
+    document.getElementById('mineButton').textContent=isOn?'Mining in progress':(state.sessionStart?'Claim MY points':'Start mining');
+    document.getElementById('stationMineButton').textContent=isOn?'Mining in progress':(state.sessionStart?'Claim MY points':'Start mining');
+    document.getElementById('mineButton').disabled=isOn;document.getElementById('stationMineButton').disabled=isOn;
+    document.getElementById('refCount').textContent=state.referrals;document.getElementById('friendCount').textContent=state.referrals;
+    renderActivity();
+  }
+  function timeFmt(ms){let s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return [h,m,sec].map(x=>String(x).padStart(2,'0')).join(':')}
+  function addActivity(title,amount){state.activity.unshift({title,amount,date:new Date().toLocaleString()});state.activity=state.activity.slice(0,15)}
+  function renderActivity(){const box=document.getElementById('activityList');if(!state.activity.length){box.innerHTML='<div class="empty">No activity yet.</div>';return}box.innerHTML=state.activity.map(a=>`<div class="activity"><div class="activity-dot">✓</div><div class="activity-main"><b>${escapeHtml(a.title)}</b><span>${escapeHtml(a.date)}</span></div><div class="activity-amount">${escapeHtml(a.amount||'')}</div></div>`).join('')}
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function toggleMining(){if(active())return;if(state.sessionStart){const amount=accrued();if(amount>0){state.balance+=amount;addActivity('Mining session claimed','+'+fmt(amount)+' MY')}state.sessionStart=0;save();toast('Mining rewards added to your balance!');return}state.sessionStart=Date.now();state.sessionRate=currentRate();state.sessionClaimed=false;save();toast('Mining started!')}
+  function claimDaily(){const today=new Date().toISOString().slice(0,10);if(state.dailyClaimed===today){toast('Daily reward already claimed today.');return}state.dailyClaimed=today;state.balance+=15;addActivity('Daily check-in reward','+15 MY');save();toast('You received 15 MY!')}
+  function taskAction(id){if(state.tasks[id]){toast('This demo task is already claimed.');return}const rewards={channel:150,community:25};state.tasks[id]=true;state.balance+=rewards[id];addActivity(id==='channel'?'Join Telegram channel task':'Explore community task','+'+rewards[id]+' MY');save();toast('Demo task claimed: +'+rewards[id]+' MY')}
+  function requestWithdrawal(){const amount=Number(document.getElementById('withdrawAmount').value),address=document.getElementById('walletAddress').value.trim();if(!Number.isFinite(amount)||amount<2000){toast('Minimum withdrawal is 2,000 MY.');return}if(amount>state.balance){toast('Insufficient MY balance.');return}if(!state.unlockedMiners.some(id=>id!=='basic')){toast('Unlock at least one premium miner to withdraw.');return}if(address.length<20){toast('Enter a valid TON wallet address.');return}state.balance-=amount;state.withdrawals.push({amount,address,status:'Pending',date:new Date().toLocaleString()});addActivity('Withdrawal request submitted','-'+fmt(amount)+' MY');save();document.getElementById('withdrawAmount').value='';document.getElementById('walletAddress').value='';modal('Request saved in demo','Your withdrawal request is stored only in this browser for now. Admin review and real processing will work after backend integration.')}
+  function updateReferral(){const user=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user;const bot='YOUR_BOT_USERNAME';const id=user?user.id:'DEMO_USER';document.getElementById('refLink').textContent='https://t.me/'+bot+'?start='+id}
+  function copyReferral(){copyText(document.getElementById('refLink').textContent)}
+  function shareReferral(){const link=document.getElementById('refLink').textContent;const url='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('Join me on MY Miner!');if(tg&&tg.openTelegramLink)tg.openTelegramLink(url);else window.open(url,'_blank')}
+  function copyContact(){copyText(document.getElementById('contactAddress').textContent)}
+  function copyText(text){if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard')).catch(()=>toast('Copy not available'));else toast('Please copy the text manually.')}
+  function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('show'),2400)}
+  function modal(title,text){document.getElementById('modalTitle').textContent=title;document.getElementById('modalText').textContent=text;document.getElementById('modalBackdrop').classList.add('show')}
+  function closeModal(){document.getElementById('modalBackdrop').classList.remove('show')}
+  window.showPage=showPage;window.toggleMining=toggleMining;window.claimDaily=claimDaily;window.taskAction=taskAction;window.requestWithdrawal=requestWithdrawal;window.copyReferral=copyReferral;window.shareReferral=shareReferral;window.copyContact=copyContact;window.closeModal=closeModal;window.toast=toast;
+
+  const VERIFICATION_WALLET='UQCo0-D4DWT4Q99BJ35ONA7wduh_qtNwwpni55UyMhsFcY';
+  const miners=[
+    {id:'basic',name:'Basic Miner',tier:'BASIC',speed:5,price:'0.5 TON verification',fee:0.5,icon:'⛏️',free:true},
+    {id:'bronze',name:'BRONZE Miner',tier:'BRONZE',speed:10,price:'1.5 TON',fee:1.5,icon:'🥉'},
+    {id:'silver',name:'SILVER Miner',tier:'SILVER',speed:20,price:'2.5 TON',fee:2.5,icon:'🥈'},
+    {id:'gold',name:'GOLD Miner',tier:'GOLD',speed:35,price:'5 TON',fee:5,icon:'🥇'},
+    {id:'diamond',name:'DIAMOND Miner',tier:'DIAMOND',speed:70,price:'10 TON',fee:10,icon:'💎'}
+  ];
+  function renderMiners(){
+    const box=document.getElementById('minerList'); if(!box)return;
+    box.innerHTML=miners.map(m=>{
+      const owned=m.id==='basic'?!!state.unlockedMiners.includes('basic'):state.unlockedMiners.includes(m.id);
+      const activeMiner=state.activeMiner===m.id;
+      const action=owned?(activeMiner?'<button class="btn secondary" disabled>Active miner</button>':`<button class="btn secondary" onclick="selectMiner('${m.id}')">Use miner</button>`):`<button class="btn" onclick="buyMiner('${m.id}')">${m.id==='basic'?'Verify 0.5 TON':'Unlock · '+m.price}</button>`;
+      return `<div class="card miner-card"><div class="miner-emblem">${m.icon}</div><div class="miner-details"><b>${m.name}</b><span>${m.tier} · ${owned?'Unlocked':'Locked'}</span><div class="miner-speed">${m.speed} MY / hour</div></div><div class="miner-price">${m.free?'0.5 TON':m.price}<div style="margin-top:8px">${action}</div></div></div>`;
+    }).join('');
+  }
+  function buyMiner(id){
+    const m=miners.find(x=>x.id===id);if(!m)return;
+    modal('TON payment required',m.id==='basic'?`Basic Miner verification fee: 0.5 TON. Verification payment destination: ${VERIFICATION_WALLET}. Payment verification is not connected yet. No payment has been made.`:`${m.name} costs ${m.price}. A separate premium-mininer payment destination has not been configured yet. TON payment and blockchain verification are not connected. No payment has been made.`);
+  }
+  function selectMiner(id){
+    if(!state.unlockedMiners.includes(id)){toast('Unlock this miner first.');return}
+    state.activeMiner=id;save();renderMiners();toast('Active miner changed.');
+  }
+  function openPromote(){
+    const html=`<div class="modal-backdrop show" id="promoteBackdrop" onclick="if(event.target===this)closePromote()"><div class="modal modal-sheet"><button class="close" onclick="closePromote()">×</button><h3>Promote Link or Channel</h3><p>1 TON = 1,000 clicks · Mission activates after TON payment confirmation.</p>
+      <label class="modal-label">Mission title</label><input class="modal-input" id="promoTitle" maxlength="70" placeholder="e.g. Join our Telegram Channel / Try Bot">
+      <label class="modal-label">Channel, bot, or website link</label><input class="modal-input" id="promoUrl" placeholder="@mychannel, t.me/mybot, or https://...">
+      <label class="modal-label">Short note (optional)</label><input class="modal-input" id="promoNote" maxlength="100" placeholder="Visit link & earn instant MY">
+      <label class="modal-label">Clicks budget · 1 TON / 1,000 clicks</label><div class="budget-grid">${[1,2,5,10].map(n=>`<button class="budget-option ${n===1?'selected':''}" id="budget${n}" onclick="setPromoBudget(${n})"><b>${n}K</b>${n} TON</button>`).join('')}</div>
+      <div class="notice"><b id="promoSummary">1,000 clicks · 1 TON</b><br>Instant click reward: +25 MY per eligible click</div>
+      <button class="btn wide" onclick="submitPromotion()">Connect TON Wallet to Pay</button><div class="notice">Payment integration is pending. This button will not charge your wallet in this prototype.</div>
+    </div></div>`;
+    document.body.insertAdjacentHTML('beforeend',html);window.promoBudget=1;
+  }
+  function setPromoBudget(n){window.promoBudget=n;[1,2,5,10].forEach(x=>document.getElementById('budget'+x).classList.toggle('selected',x===n));document.getElementById('promoSummary').textContent=(n*1000).toLocaleString()+' clicks · '+n+' TON';}
+  function closePromote(){const el=document.getElementById('promoteBackdrop');if(el)el.remove()}
+  function submitPromotion(){
+    const title=document.getElementById('promoTitle').value.trim(),raw=document.getElementById('promoUrl').value.trim(),note=document.getElementById('promoNote').value.trim();
+    if(title.length<3){toast('Enter a mission title.');return}
+    let url=raw;if(/^@[\w]+$/.test(raw))url='https://t.me/'+raw.slice(1);else if(/^t\.me\//i.test(raw))url='https://'+raw;
+    try{const u=new URL(url);if(!['https:','http:'].includes(u.protocol))throw 0;url=u.href}catch(e){toast('Enter a valid Telegram or website link.');return}
+    modal('Payment integration pending',`Your promotion is configured for ${window.promoBudget*1000} clicks at ${window.promoBudget} TON. It will be published only after the backend verifies payment. No payment has been made.`);
+    closePromote();
+    // Keep draft locally for preview only; it is not published or charged.
+    state.promotionDraft={title,url,note,budget:window.promoBudget};save();
+  }
+  function completeDemoTask(id,reward,url){
+    if(state.claimedTasks.includes(id)){toast('You have already claimed this demo task.');return}
+    state.claimedTasks.push(id);state.balance+=reward;addActivity('Task reward: '+id,'+'+reward+' MY');save();
+    if(url&&url!=='https://t.me/')window.open(url,'_blank','noopener');
+    toast('Demo reward credited: +'+reward+' MY');
+  }
+  function renderPromotedTasks(){
+    const box=document.getElementById('promotedTasks');if(!box)return;
+    const list=state.promotions||[];
+    box.innerHTML=list.length?list.map((p,i)=>`<div class="card task-promo"><div class="task"><div class="task-icon">📣</div><div class="task-body"><b>${escapeHtml(p.title)}</b><span>${escapeHtml(p.note||'Open the link and earn instant MY')}</span><div class="reward">+25 MY · Sponsored</div></div></div><div class="task-actions"><span class="tag">PROMOTED</span><button class="btn secondary" onclick="openPromoted(${i})">Start task</button></div></div>`).join(''):'<div class="empty">No promoted missions yet.</div>';
+  }
+  function openPromoted(i){const p=(state.promotions||[])[i];if(!p)return;state.claimedPromotions=state.claimedPromotions||[];if(!state.claimedPromotions.includes(i)){state.claimedPromotions.push(i);state.balance+=25;addActivity('Promoted task reward','+25 MY');save();}window.open(p.url,'_blank','noopener');toast('Link opened · +25 MY demo reward')}
+  window.buyMiner=buyMiner;window.selectMiner=selectMiner;window.openPromote=openPromote;window.setPromoBudget=setPromoBudget;window.submitPromotion=submitPromotion;window.closePromote=closePromote;window.completeDemoTask=completeDemoTask;window.openPromoted=openPromoted;
+  const user=tg&&tg.initDataUnsafe&&tg.initDataUnsafe.user;
+  if(user){document.getElementById('welcomeName').textContent='Welcome, '+(user.first_name||'Miner');document.getElementById('avatar').textContent=(user.first_name||'M').charAt(0).toUpperCase();document.getElementById('connection').textContent='● Telegram'}else{document.getElementById('welcomeName').textContent='Welcome, Miner'}
+  // TON Connect: connection only. No transaction is sent by this feature.
+  function initTonConnect(){
+    const statusEl=document.getElementById('tonWalletStatus');
+    const badgeEl=document.getElementById('tonWalletBadge');
+    const headerEl=document.getElementById('connection');
+    if(!window.TON_CONNECT_UI || !window.TON_CONNECT_UI.TonConnectUI){
+      if(statusEl) statusEl.textContent='Wallet connector could not load. Refresh the app and try again.';
+      return;
+    }
+    const manifestUrl=new URL('tonconnect-manifest.json', window.location.href).href;
+    try{
+      window.myMinerTonConnect=new window.TON_CONNECT_UI.TonConnectUI({
+        manifestUrl:manifestUrl,
+        buttonRootId:'ton-connect'
+      });
+      window.myMinerTonConnect.onStatusChange(wallet=>{
+        if(wallet && wallet.account){
+          const raw=wallet.account.address;
+          let display=raw;
+          try{
+            if(window.TON_CONNECT_UI.toUserFriendlyAddress){
+              display=window.TON_CONNECT_UI.toUserFriendlyAddress(raw);
+            }
+          }catch(e){}
+          const short=display.length>24?display.slice(0,10)+'…'+display.slice(-8):display;
+          if(statusEl) statusEl.textContent='Connected: '+short;
+          if(badgeEl){badgeEl.textContent='CONNECTED';badgeEl.className='tag';badgeEl.style.background='#e4fbf2';badgeEl.style.color='#159b75';}
+          if(headerEl) headerEl.textContent='● Wallet connected';
+          window.myMinerWalletAddress=display;
+        }else{
+          if(statusEl) statusEl.textContent='No TON wallet connected. Use the Connect Wallet button above.';
+          if(badgeEl){badgeEl.textContent='NOT CONNECTED';badgeEl.className='tag';}
+          if(headerEl) headerEl.textContent=(tg?'● Telegram':'● Demo mode');
+          window.myMinerWalletAddress=null;
+        }
+      });
+    }catch(err){
+      console.error('TON Connect initialization error:',err);
+      if(statusEl) statusEl.textContent='Could not initialize TON Connect. Check that tonconnect-manifest.json is deployed at the app root.';
+    }
+  }
+  updateReferral();render();renderMiners();renderPromotedTasks();initTonConnect();timerInterval=setInterval(()=>{render();if(state.sessionStart&&!active()){render();document.getElementById('mineButton').disabled=false;document.getElementById('stationMineButton').disabled=false;document.getElementById('mineButton').textContent='Claim MY points';document.getElementById('stationMineButton').textContent='Claim MY points'}},1000);
+})();
+</script>
+</body>
+</html>
