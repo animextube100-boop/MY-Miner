@@ -1,5 +1,5 @@
 {
-  "url": "https://YOUR-DEPLOYED-MY-MINER-DOMAIN",
+  "url": "https://my-miner-sandy.vercel.app",
   "name": "MY Miner",
-  "iconUrl": "https://YOUR-DEPLOYED-MY-MINER-DOMAIN/my-miner-icon.png"
+  "iconUrl": "https://my-miner-sandy.vercel.app/my-miner-icon.png"
 }
