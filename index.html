@@ -82,7 +82,7 @@ h1{font-size:22px;line-height:1.15;margin:9px 0 6px;max-width:75%}.sub{font-size
         <div class="section-head"><h2>🎁 Daily streak</h2><span class="tag" id="streakTag">Day 1 / 7</span></div>
         <div class="mini-row"><strong>Come back every day!</strong><span class="verified">+15 MY today</span></div>
         <div class="days"><div class="day done">Day<b>1 ✓</b></div><div class="day">Day<b>2 · 20</b></div><div class="day">Day<b>3 · 30</b></div><div class="day">Day<b>4 · 40</b></div><div class="day">Day<b>5 · 50</b></div><div class="day">Day<b>6 · 60</b></div><div class="day">Day<b>7 · 80</b></div></div>
-        <button class="btn secondary wide" onclick="claimDaily()">Claim daily reward · +15 MY</button>
+        <button class="btn secondary wide" onclick="claimDaily()">Daily reward · Coming soon</button>
       </div>
       <div class="section-title">Quick access</div>
       <div class="grid2">
@@ -123,7 +123,7 @@ h1{font-size:22px;line-height:1.15;margin:9px 0 6px;max-width:75%}.sub{font-size
 
     <section class="page" id="friends">
       <div class="page-head"><h2>👥 Invite friends</h2><p>Grow the MY Miner community together.</p></div>
-      <div class="card wallet-total"><div class="eyebrow">YOUR REFERRAL REWARD</div><div class="balance">+50 <span class="unit">MY</span></div><div class="sub">Earn 50 MY for each eligible friend who joins through your invite link. Referral rules will be enforced by the backend.</div></div>
+      <div class="card wallet-total"><div class="eyebrow">YOUR REFERRAL REWARD</div><div class="balance">+50 <span class="unit">MY</span></div><div class="sub">Referral rewards are not enabled yet. Backend referral tracking must be added before rewards can be credited.</div></div>
       <div class="card"><div class="section-head"><h2>Your invite link</h2><span class="tag">PERSONAL</span></div><div class="refbox" id="refLink">Your Telegram invite link will appear after the bot is connected.</div><div class="grid2"><button class="btn" onclick="copyReferral()">Copy link</button><button class="btn secondary" onclick="shareReferral()">Invite friends</button></div></div>
       <div class="grid2"><div class="stat"><div class="stat-label">Total referrals</div><div class="stat-value" id="friendCount">0</div></div><div class="stat"><div class="stat-label">Referral earnings</div><div class="stat-value">0 MY</div></div></div>
       <div class="notice">Your final referral link will use your Telegram bot username and a unique referral code.</div>
@@ -305,6 +305,89 @@ h1{font-size:22px;line-height:1.15;margin:9px 0 6px;max-width:75%}.sub{font-size
     }
   }
   updateReferral();render();renderMiners();renderPromotedTasks();initTonConnect();timerInterval=setInterval(()=>{render();if(state.sessionStart&&!active()){render();document.getElementById('mineButton').disabled=false;document.getElementById('stationMineButton').disabled=false;document.getElementById('mineButton').textContent='Claim MY points';document.getElementById('stationMineButton').textContent='Claim MY points'}},1000);
+/* MY Miner backend integration layer. Requires Telegram Mini App launch. */
+const MYM_API='https://app-ff4dfd.subhub.tr';
+let mymMe=null,mymMiners=[],mymPromotions=[],mymWithdrawals=[];
+const mymHeaders=()=>({'Content-Type':'application/json','X-Telegram-Init-Data':(window.Telegram?.WebApp?.initData||'')});
+async function mymApi(path,opts={}){
+  const init=window.Telegram?.WebApp?.initData||'';
+  if(!init) throw new Error('Open MY Miner inside Telegram to authenticate your account.');
+  const res=await fetch(MYM_API+path,{...opts,headers:{...mymHeaders(),...(opts.headers||{})}});
+  let data={};try{data=await res.json()}catch(e){}
+  if(!res.ok)throw new Error(data.detail||data.message||('Server error '+res.status));
+  return data;
+}
+function mymSync(){
+  if(!mymMe)return;
+  state.balance=Number(mymMe.balance_my||0);
+  state.sessionStart=0;state.sessionRate=0;state.sessionClaimed=false;
+  state.unlockedMiners=mymMe.owned_miners||[];
+  if(mymMe.basic_verified&&!state.unlockedMiners.includes('basic'))state.unlockedMiners.push('basic');
+  state.activeMiner=mymMe.active_miner||'basic';
+  state.referrals=Number(mymMe.referrals||0);
+  render();renderMiners();renderPromotedTasks();
+  const w=document.getElementById('walletBalance');if(w)w.innerHTML=fmt(state.balance)+' <span class="unit">MY</span>';
+  const wa=document.getElementById('walletAddress');if(wa&&mymMe.wallet_address)wa.value=mymMe.wallet_address;
+}
+async function mymRefresh(){
+  const [me,miners,promos,withdrawals]=await Promise.all([
+    mymApi('/api/me'),mymApi('/api/miners'),mymApi('/api/promotions'),mymApi('/api/withdrawals')
+  ]);
+  mymMe=me;mymMiners=miners.miners||[];mymPromotions=promos.promotions||[];mymWithdrawals=withdrawals.withdrawals||[];
+  state.promotions=mymPromotions; mymSync();
+  const st=document.getElementById('connection');if(st)st.textContent='● Telegram · Server synced';
+}
+async function mymSendPayment(order){
+  if(!window.myMinerTonConnect?.connected)throw new Error('Connect your TON wallet first.');
+  const amount=Number(order.amount_nano);
+  if(!Number.isSafeInteger(amount)||amount<=0)throw new Error('Invalid payment amount returned by server.');
+  await window.myMinerTonConnect.sendTransaction({validUntil:Math.floor(Date.now()/1000)+300,messages:[{address:order.receiver,amount:String(amount),payload:window.TON_CONNECT_UI?.toUserFriendlyAddress?undefined:undefined}]});
+  // Backend verification currently uses the unique memo. This requires a comment payload; sendTransaction above is not sufficient.
+  throw new Error('Payment request was sent without the required unique memo. Do not treat this as paid. Backend payment memo support must be fixed before real payments are enabled.');
+}
+async function buyMiner(id){
+  try{
+    const order=await mymApi('/api/orders/miner',{method:'POST',body:JSON.stringify({miner_id:id})});
+    modal('Payment order created',`${order.amount_ton} TON is required.\nReceiver: ${order.receiver}\nMemo: ${order.memo}\n\nPayment sending is paused until memo-bearing TON Connect transactions and on-chain verification are validated. No miner has been activated.`);
+  }catch(e){toast(e.message)}
+}
+async function selectMiner(id){
+  if(!(mymMe?.owned_miners||[]).includes(id)){toast('Purchase and verify this miner first.');return;}
+  toast('Your server accrues mining at the highest owned miner rate.');
+}
+async function requestWithdrawal(){
+  const amount=Number(document.getElementById('withdrawAmount').value),destination=document.getElementById('walletAddress').value.trim();
+  if(!Number.isFinite(amount)||amount<2000){toast('Minimum withdrawal is 2,000 MY.');return}
+  if(!destination){toast('Enter your TON withdrawal address.');return}
+  try{await mymApi('/api/wallet',{method:'POST',body:JSON.stringify({address:destination})});const result=await mymApi('/api/withdrawals',{method:'POST',body:JSON.stringify({amount,destination})});
+    document.getElementById('withdrawAmount').value='';await mymRefresh();modal('Withdrawal submitted',`Request #${result.withdrawal_id} submitted for ${result.amount_my} MY. Status: ${result.status}. Admin review is required.`);
+  }catch(e){toast(e.message)}
+}
+function toggleMining(){toast('Mining is calculated automatically by the server while you own a verified miner. Refresh your balance to see accrued MY.');mymRefresh().catch(e=>toast(e.message));}
+function claimDaily(){toast('Daily reward is not available yet; the backend has no daily-claim endpoint.');}
+function taskAction(){toast('Task rewards are disabled until task verification and reward rules are implemented on the backend.');}
+function completeDemoTask(){toast('Demo task rewards are disabled. No MY has been credited.');}
+function openPromote(){
+ const html=`<div class="modal-backdrop show" id="promoteBackdrop" onclick="if(event.target===this)closePromote()"><div class="modal modal-sheet"><button class="close" onclick="closePromote()">×</button><h3>Promote Link or Channel</h3><p>1 TON = 1,000 clicks. Your promotion activates after payment verification.</p><label class="modal-label">Mission title</label><input class="modal-input" id="promoTitle" maxlength="70" placeholder="Campaign title"><label class="modal-label">Destination URL</label><input class="modal-input" id="promoUrl" placeholder="https://... or t.me/... "><label class="modal-label">Short note (optional)</label><input class="modal-input" id="promoNote" maxlength="100" placeholder="Campaign details"><label class="modal-label">Budget</label><div class="budget-grid">${[1,2,5,10].map(n=>`<button class="budget-option ${n===1?'selected':''}" id="budget${n}" onclick="setPromoBudget(${n})"><b>${n}K</b>${n} TON</button>`).join('')}</div><div class="notice" id="promoSummary">1,000 clicks · 1 TON. No click reward is currently configured.</div><button class="btn wide" onclick="submitPromotion()">Create payment order</button></div></div>`;
+ document.body.insertAdjacentHTML('beforeend',html);window.promoBudget=1;
+}
+function setPromoBudget(n){window.promoBudget=n;[1,2,5,10].forEach(x=>document.getElementById('budget'+x)?.classList.toggle('selected',x===n));document.getElementById('promoSummary').textContent=`${(n*1000).toLocaleString()} clicks · ${n} TON. No click reward is currently configured.`;}
+function closePromote(){document.getElementById('promoteBackdrop')?.remove();}
+async function submitPromotion(){
+ const title=document.getElementById('promoTitle').value.trim(),raw=document.getElementById('promoUrl').value.trim(),note=document.getElementById('promoNote').value.trim();
+ if(title.length<3){toast('Enter a campaign title.');return}let url=raw;if(/^@[\w]+$/.test(raw))url='https://t.me/'+raw.slice(1);else if(/^t\.me\//i.test(raw))url='https://'+raw;
+ try{const u=new URL(url);if(!['https:','http:'].includes(u.protocol))throw Error();url=u.href}catch(e){toast('Enter a valid HTTP, HTTPS or Telegram URL.');return}
+ try{const order=await mymApi('/api/orders/promotion',{method:'POST',body:JSON.stringify({title,url,note,budget_ton:window.promoBudget})});closePromote();modal('Promotion order created',`${order.amount_ton} TON · ${window.promoBudget*1000} clicks\nReceiver: ${order.receiver}\nMemo: ${order.memo}\n\nPayment is not sent from this version. The promotion remains unpublished until verified.`)}catch(e){toast(e.message)}
+}
+function renderPromotedTasks(){const box=document.getElementById('promotedTasks');if(!box)return;const list=state.promotions||[];box.innerHTML=list.length?list.map((p,i)=>`<div class="card task-promo"><div class="task"><div class="task-icon">📣</div><div class="task-body"><b>${escapeHtml(p.title)}</b><span>${escapeHtml(p.note||'Sponsored mission')}</span><div class="reward">Sponsored · no MY reward configured</div></div></div><div class="task-actions"><span class="tag">PROMOTED</span><button class="btn secondary" onclick="openPromoted(${i})">Start task</button></div></div>`).join(''):'<div class="empty">No active promoted missions yet.</div>';}
+async function openPromoted(i){const p=(state.promotions||[])[i];if(!p)return;try{const r=await mymApi(`/api/promotions/${p.id}/click`,{method:'POST'});window.open(p.url,'_blank','noopener');toast(r.reward_my>0?`Promotion opened · +${r.reward_my} MY`:'Promotion opened · no MY reward configured');await mymRefresh()}catch(e){toast(e.message)}}
+async function mymSaveWallet(){const address=document.getElementById('walletAddress').value.trim();if(address.length<20){toast('Enter a valid TON wallet address.');return}try{await mymApi('/api/wallet',{method:'POST',body:JSON.stringify({address})});await mymRefresh();toast('Wallet saved securely.')}catch(e){toast(e.message)}}
+window.buyMiner=buyMiner;window.selectMiner=selectMiner;window.requestWithdrawal=requestWithdrawal;window.toggleMining=toggleMining;window.claimDaily=claimDaily;window.taskAction=taskAction;window.completeDemoTask=completeDemoTask;window.openPromote=openPromote;window.setPromoBudget=setPromoBudget;window.closePromote=closePromote;window.submitPromotion=submitPromotion;window.openPromoted=openPromoted;
+// Never allow demo/local state to become authoritative.
+save=function(){render();};
+const mymInit=async()=>{try{if(window.Telegram?.WebApp){window.Telegram.WebApp.ready();window.Telegram.WebApp.expand();}await mymRefresh();}catch(e){const c=document.getElementById('connection');if(c)c.textContent='● Not synced';toast(e.message);}};
+mymInit();
+
 })();
 </script>
 </body>
