@@ -65,6 +65,12 @@ h1{font-size:22px;line-height:1.15;margin:9px 0 6px;max-width:75%}.sub{font-size
         <div><div class="balance-title">APP BALANCE</div><div class="balance" id="balance">0.0000 <span class="unit">MY</span></div></div>
         <div class="min-withdraw">Minimum withdrawal<strong>2,000 MY</strong><a href="#" onclick="showPage('wallet');return false" style="color:#079dcc;text-decoration:none;font-weight:800">Wallet ›</a></div>
       </div>
+      <div class="card hidden" id="testMinerCard" style="border:1px solid #f1d28b;background:linear-gradient(135deg,#fffdf5,#fff8e6)">
+        <div class="section-head"><h2>🧪 Temporary Test Miner</h2><span class="tag" id="testMinerStatus">TEST MODE</span></div>
+        <div class="mini-row"><span>Test mining balance</span><strong id="testMinerBalance">0.000000 MY</strong></div>
+        <div class="mini-row" style="margin-top:9px"><span>Mining speed</span><strong id="testMinerSpeed">5 MY/hour</strong></div>
+        <div class="notice" style="background:#fff3d4;color:#805b12"><b>TEST MODE — NOT WITHDRAWABLE</b><br>This temporary balance is separate from your real MY balance and cannot be withdrawn or transferred.</div>
+      </div>
       <div class="grid2">
         <div class="stat"><div class="stat-label">⚡ Hourly mining</div><div class="stat-value">5 <small>MY/hr</small></div></div>
         <div class="stat"><div class="stat-label">☀ Daily mining</div><div class="stat-value">480 <small>MY/day</small></div></div>
@@ -317,6 +323,25 @@ async function mymApi(path,opts={}){
   if(!res.ok)throw new Error(data.detail||data.message||('Server error '+res.status));
   return data;
 }
+function renderTestMiner(){
+  const card=document.getElementById('testMinerCard');
+  if(!card)return;
+  const test=mymMe?.test_miner;
+  if(!test || !test.enabled){
+    card.classList.add('hidden');
+    return;
+  }
+  card.classList.remove('hidden');
+  const active=!!test.active;
+  const status=document.getElementById('testMinerStatus');
+  if(status){
+    status.textContent=active?'ACTIVE · TEST':'INACTIVE · TEST';
+    status.style.background=active?'#e4fbf2':'#fff0d9';
+    status.style.color=active?'#159b75':'#946414';
+  }
+  document.getElementById('testMinerBalance').textContent=Number(test.test_balance_my||0).toFixed(6)+' MY';
+  document.getElementById('testMinerSpeed').textContent=Number(test.speed_my_per_hour||5)+' MY/hour';
+}
 function mymSync(){
   if(!mymMe)return;
   state.balance=Number(mymMe.balance_my||0);
@@ -325,7 +350,7 @@ function mymSync(){
   if(mymMe.basic_verified&&!state.unlockedMiners.includes('basic'))state.unlockedMiners.push('basic');
   state.activeMiner=mymMe.active_miner||'basic';
   state.referrals=Number(mymMe.referrals||0);
-  render();renderMiners();renderPromotedTasks();
+  render();renderMiners();renderPromotedTasks();renderTestMiner();
   const w=document.getElementById('walletBalance');if(w)w.innerHTML=fmt(state.balance)+' <span class="unit">MY</span>';
   const wa=document.getElementById('walletAddress');if(wa&&mymMe.wallet_address)wa.value=mymMe.wallet_address;
 }
@@ -387,6 +412,15 @@ window.buyMiner=buyMiner;window.selectMiner=selectMiner;window.requestWithdrawal
 save=function(){render();};
 const mymInit=async()=>{try{if(window.Telegram?.WebApp){window.Telegram.WebApp.ready();window.Telegram.WebApp.expand();}await mymRefresh();}catch(e){const c=document.getElementById('connection');if(c)c.textContent='● Not synced';toast(e.message);}};
 mymInit();
+// Refresh the server-authoritative test balance periodically without mixing it into the real MY balance.
+setInterval(async()=>{
+  if(!window.Telegram?.WebApp?.initData)return;
+  try{
+    const me=await mymApi('/api/me');
+    mymMe=me;
+    renderTestMiner();
+  }catch(e){console.warn('Test miner refresh failed:',e.message);}
+},30000);
 
 })();
 </script>
